@@ -1,0 +1,62 @@
+name: Trivy
+
+on:
+  workflow_dispatch:
+
+env:
+  GITHUB_SHA: ${{ github.sha }}
+  REGISTRY: ascheid/trivy-test
+
+permissions:
+  contents: write
+  actions: read
+  security-events: write
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
+
+      - name: Build container
+        working-directory: ./
+        run: |
+          docker build \
+            --build-arg git_sha=$GITHUB_SHA \
+            -t $REGISTRY:$GITHUB_SHA \
+            -t $REGISTRY:latest .
+      
+      - name: install trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.34.0
+        
+      - name: run trivy docker
+        run: |
+          trivy image \
+          --format github \
+          --vuln-type os,library \
+          --severity UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL \
+          --output dependency-results.sbom.json $REGISTRY/sentinel
+
+      - name: replace apk with alpine
+        run: |
+          sed -i 's/pkg:apk/pkg:alpine/g' dependency-results.sbom.json
+          cat dependency-results.sbom.json
+          
+      - name: upload results
+        run: |
+          curl -H 'Accept: application/vnd.github+json' -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          'https://api.github.com/repos/'$GITHUB_REPOSITORY'/dependency-graph/snapshots' -d @dependency-results.sbom.json
+          
+      - name: run triby vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '$GITHUB_REPOSITORY'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: upload trivy scan results to gh security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
