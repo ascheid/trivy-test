@@ -52,7 +52,7 @@ jobs:
       - name: run triby vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.GITHUB_REPOSITORY }}'
+          image-ref: '${{ env.REGISTRY }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
           
