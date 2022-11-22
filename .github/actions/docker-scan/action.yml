@@ -30,6 +30,8 @@ runs:
     - name: replace apk with alpine
       run: |
         sed -i 's/pkg:apk/pkg:alpine/g' dependency-results.sbom.json
+        cat ${{ env.GITHUB_ACTION }}
+        jq '.job.correlator = "Trivy_${{ env.GITHUB_ACTION }}"'
         cat dependency-results.sbom.json
       shell: bash
 
