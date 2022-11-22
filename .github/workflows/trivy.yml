@@ -31,7 +31,7 @@ jobs:
             -t ${{ env.REGISTRY }}/${{ matrix.image }}:latest .
       
       - name: Docker scan and SBOM to GitHub
-        uses: ascheid/trivy-test/.github/actions/docker-scan
+        uses: ./.github/actions/docker-scan
         with:
           docker_image: ${{ env.REGISTRY }}/${{ matrix.image }}:${{ env.GITHUB_SHA }}
           token: ${{ secrets.GITHUB_TOKEN }}
