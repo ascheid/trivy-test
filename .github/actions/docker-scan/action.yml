@@ -30,8 +30,7 @@ runs:
     - name: replace apk with alpine
       run: |
         sed -i 's/pkg:apk/pkg:alpine/g' dependency-results.sbom.json
-        tmp_correlator=$(jq '.metadata."aquasecurity:trivy:RepoTag"' dependency-results.sbom.json)
-        jq '.job.correlator = "$tmp_correlator"' dependency-results.sbom.json
+        jq '.job.correlator = '"trivy_${{ inputs.token }}"'' dependency-results.sbom.json
         cat dependency-results.sbom.json
       shell: bash
 
