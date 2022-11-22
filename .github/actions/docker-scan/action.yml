@@ -30,6 +30,7 @@ runs:
     - name: replace apk with alpine
       run: |
         sed -i 's/pkg:apk/pkg:alpine/g' dependency-results.sbom.json
+        cat dependency-results.sbom.json
       shell: bash
 
     - name: add mask to token
