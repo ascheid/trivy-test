@@ -8,9 +8,6 @@ inputs:
   token:
     description: "Token for allowing the action to post in the security tab"
     required: true
-  action-path:
-    description: "Path where action is located"
-    required: true
 
 runs:
   using: "composite"
@@ -33,9 +30,7 @@ runs:
     - name: replace apk with alpine
       run: |
         sed -i 's/pkg:apk/pkg:alpine/g' dependency-results.sbom.json
-        tmp_correlator=(jq '.metadata.aquasecurity:trivy:RepoTag[1]')
-        cat $tmp_correlator
-        jq '.job.correlator = "$tmp_correlator"' dependency-results.sbom.json
+        jq '.job.correlator = "$(jq '.metadata."aquasecurity:trivy:RepoTag"' dependency-results.sbom.json)"' dependency-results.sbom.json
         cat dependency-results.sbom.json
       shell: bash
 
