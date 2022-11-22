@@ -15,12 +15,15 @@ permissions:
 jobs:
   trivy:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image: [one, two]
     steps:
       - name: Checkout
         uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8
 
       - name: Build container
-        working-directory: ./
+        working-directory: ./images/${{ matrix.image }}
         run: |
           docker build \
             --build-arg git_sha=$GITHUB_SHA \
