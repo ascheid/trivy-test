@@ -27,11 +27,11 @@ jobs:
         run: |
           docker build \
             --build-arg git_sha=$GITHUB_SHA \
-            -t $REGISTRY:$GITHUB_SHA \
-            -t $REGISTRY:latest .
+            -t ${{ env.REGISTRY }}/${{ matrix.image }}:$GITHUB_SHA \
+            -t ${{ env.REGISTRY }}/${{ matrix.image }}:latest .
       
       - name: Docker scan and SBOM to GitHub
-        uses: cds-snc/security-tools/.github/actions/docker-scan@e8bfe289161e1a923f8bb153c57280abfa33eb22
+        uses: ascheid/trivy-test/.github/actions/docker-scan
         with:
-          docker_image: ${{ env.REGISTRY }}:${{ env.GITHUB_SHA }}
+          docker_image: ${{ env.REGISTRY }}/${{ matrix.image }}:${{ env.GITHUB_SHA }}
           token: ${{ secrets.GITHUB_TOKEN }}
