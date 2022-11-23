@@ -33,5 +33,5 @@ jobs:
       - name: Docker scan and SBOM to GitHub
         uses: ./.github/actions/docker-scan
         with:
-          docker_image: ${{ env.REGISTRY }}/${{ matrix.image }}:${{ env.GITHUB_SHA }}
+          docker_image: ${{ env.REGISTRY }}/${{ matrix.image }}:latest
           token: ${{ secrets.GITHUB_TOKEN }}
