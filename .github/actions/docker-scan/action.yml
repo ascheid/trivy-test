@@ -40,6 +40,7 @@ runs:
       shell: bash
     
     - name: upload sbom to github
+      if: github.event == 'push'
       run: |
         curl \
           -H 'Accept: application/vnd.github+json' \
