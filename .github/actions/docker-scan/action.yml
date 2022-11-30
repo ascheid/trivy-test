@@ -36,6 +36,7 @@ runs:
 
     - name: add mask to token
       run: |
+        echo {{ github.event }}
         echo "::add-mask::${{ inputs.token }}"
       shell: bash
     
