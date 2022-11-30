@@ -53,3 +53,4 @@ jobs:
         with:
           docker_image: ${{ env.REGISTRY }}/${{ matrix.image }}:latest
           token: ${{ secrets.GITHUB_TOKEN }}
+          
