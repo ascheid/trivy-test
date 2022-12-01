@@ -36,14 +36,14 @@ runs:
 
     - name: add mask to token
       run: |
-        echo ${{ github.event }}
-        echo ${{ env.default_branch_ref }}
+        echo ${{ github.event_name }}
+        echo ${{ github.event.repository.default_branch }}
         echo ${{ github.ref }}
         echo "::add-mask::${{ inputs.token }}"
       shell: bash
     
     - name: upload sbom to github
-      if: github.event == 'push'
+      if: github.event_name == 'push'
       run: |
         curl \
           -H 'Accept: application/vnd.github+json' \
