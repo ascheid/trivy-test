@@ -28,7 +28,7 @@ runs:
         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.34.0
       shell: bash
     
-     - name: Re-tag docker image for readability
+     - name: Retag docker image for readability
        run: |
         docker tag ${{ inputs.docker_image }} ${{ inputs.sbom_name }}
       shell: bash
