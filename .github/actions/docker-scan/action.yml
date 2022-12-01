@@ -18,7 +18,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup upload_sbom variable
+    - name: Setup upload sbom variable
       run: |
         echo "UPLOAD_SBOM=$(${{ github.event_name }} == 'push' && ${{ github.event.repository.default_branch }} == ${{ github.ref }})" >> $GITHUB_ENV
       shell: bash
@@ -28,8 +28,8 @@ runs:
         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.34.0
       shell: bash
     
-     - name: Retag docker image for readability
-       run: |
+    - name: Retag docker image for readability
+      run: |
         docker tag ${{ inputs.docker_image }} ${{ inputs.sbom_name }}
       shell: bash
 
