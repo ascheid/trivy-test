@@ -37,6 +37,8 @@ runs:
     - name: add mask to token
       run: |
         echo ${{ github.event }}
+        echo ${{ env.default_branch_ref }}
+        echo ${{ github.ref }}
         echo "::add-mask::${{ inputs.token }}"
       shell: bash
     
