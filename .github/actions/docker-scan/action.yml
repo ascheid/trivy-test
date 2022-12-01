@@ -29,7 +29,7 @@ jobs:
       
       - name: Retag docker image for readability
         run: |
-          docker tag ${{ inputs.docker_image }} ${{ inputs.sbom_name }}
+          docker tag ${{ github.event.inputs.docker_image }} ${{ github.event.inputs.sbom_name }}
         shell: bash
 
       - name: run trivy docker sbom
@@ -39,7 +39,7 @@ jobs:
             --vuln-type os,library \
             --security-checks vuln \
             --output dependency-results.sbom.json \
-            ${{ inputs.sbom_name }}
+            ${{ github.event.inputs.sbom_name }}
         shell: bash
 
       - name: replace apk with alpine
@@ -49,20 +49,20 @@ jobs:
 
       - name: replace correlator
         run: |
-          cat dependency-results.sbom.json | jq '.job.correlator = "${{ inputs.sbom_name }}"' > sbom.tmp 
+          cat dependency-results.sbom.json | jq '.job.correlator = "${{ github.event.inputs.sbom_name }}"' > sbom.tmp 
           mv sbom.tmp dependency-results.sbom.json
         shell: bash
 
       - name: add mask to token
         run: |
-          echo "::add-mask::${{ inputs.token }}"
+          echo "::add-mask::${{ github.event.inputs.token }}"
         shell: bash
       
       - name: upload sbom to github
         run: |
           curl \
             -H 'Accept: application/vnd.github+json' \
-            -H 'Authorization: token ${{ inputs.token }}' \
+            -H 'Authorization: token ${{ github.event.inputs.token }}' \
             'https://api.github.com/repos/'$GITHUB_REPOSITORY'/dependency-graph/snapshots' \
             -d @dependency-results.sbom.json
         shell: bash
@@ -71,15 +71,16 @@ jobs:
     using: "composite"
     if: inputs.upload_docker_vulns == 'true'
     runs-on: ubuntu-latest
-    - name: run docker vulnerability scanner
-      uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
-      with:
-        image-ref: '${{ inputs.sbom_name }}'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
+    steps:
+      - name: run docker vulnerability scanner
+        uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
+        with:
+          image-ref: '${{ github.event.inputs.sbom_name }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
 
-    - name: upload trivy scan results to github security tab
-      uses: github/codeql-action/upload-sarif@678fc3afe258fb2e0cdc165ccf77b85719de7b3c # v2.1.33
-      with:
-        sarif_file: 'trivy-results.sarif'
-        token: ${{ inputs.token }}
+      - name: upload trivy scan results to github security tab
+        uses: github/codeql-action/upload-sarif@678fc3afe258fb2e0cdc165ccf77b85719de7b3c # v2.1.33
+        with:
+          sarif_file: 'trivy-results.sarif'
+          token: ${{ github.event.inputs.token }}
