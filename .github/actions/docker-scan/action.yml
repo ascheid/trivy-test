@@ -5,45 +5,67 @@ inputs:
   docker_image:
     description: "The docker image and tag to be scanned"
     required: true
+  sbom_name:
+    description: "SBOM identification"
+    required: true
   token:
     description: "Token for allowing the action to post in the security tab"
     required: true
+  upload_docker_vulns:
+    description: "Flag to specify vulnerabilities upload"
+    default: true
 
 runs:
   using: "composite"
   steps:
+    - name: Setup upload_sbom variable
+      run: |
+        echo "UPLOAD_SBOM=$(${{ github.event_name }} == 'push' && ${{ github.event.repository.default_branch }} == ${{ github.ref }})" >> $GITHUB_ENV
+      shell: bash
+
     - name: Install Trivy
       run: |
         curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.34.0
       shell: bash
+    
+     - name: Re-tag docker image for readability
+       run: |
+        docker tag ${{ inputs.docker_image }} ${{ inputs.sbom_name }}
+      shell: bash
 
-    - name: run trivy docker
+    - name: run trivy docker sbom
+      id: trivy_sbom
+      if: UPLOAD_SBOM
       run: |
         trivy image \
           --format github \
           --vuln-type os,library \
           --security-checks vuln \
           --output dependency-results.sbom.json \
-          ${{ inputs.docker_image }}
+          ${{ inputs.sbom_name }}
       shell: bash
 
     - name: replace apk with alpine
+      needs: trivy_sbom
       run: |
         sed -i 's/pkg:apk/pkg:alpine/g' dependency-results.sbom.json
-        jq '.job.correlator = "trivy_'${{ inputs.docker_image }}'"' dependency-results.sbom.json > sbom.tmp && mv sbom.tmp dependency-results.sbom.json
-        cat dependency-results.sbom.json
+      shell: bash
+
+    - name: replace correlator
+      needs: trivy_sbom
+      run: |
+        cat dependency-results.sbom.json | jq '.job.correlator = "${{ inputs.sbom_name }}"' > sbom.tmp 
+        mv sbom.tmp dependency-results.sbom.json
       shell: bash
 
     - name: add mask to token
+      needs: trivy_sbom
       run: |
-        echo ${{ github.event_name }}
-        echo ${{ github.event.repository.default_branch }}
-        echo ${{ github.ref }}
         echo "::add-mask::${{ inputs.token }}"
       shell: bash
     
     - name: upload sbom to github
-      if: github.event_name == 'push'
+      needs: trivy_sbom
       run: |
         curl \
           -H 'Accept: application/vnd.github+json' \
@@ -54,13 +76,15 @@ runs:
 
     - name: run docker vulnerability scanner
       uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
+      if: upload_docker_vulns
       with:
-        image-ref: '${{ inputs.docker_image }}'
+        image-ref: '${{ inputs.sbom_name }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
 
     - name: upload trivy scan results to github security tab
-      uses: github/codeql-action/upload-sarif@4238421316c33d73aeea2801274dd286f157c2bb # v2.1.32
+      uses: github/codeql-action/upload-sarif@678fc3afe258fb2e0cdc165ccf77b85719de7b3c # v2.1.33
+      if: upload_docker_vulns
       with:
         sarif_file: 'trivy-results.sarif'
         token: ${{ inputs.token }}
