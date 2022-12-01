@@ -19,6 +19,13 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: debug
+      run: |
+        echo ${{ github.event_name }}
+        echo ${{ github.event.repository.default_branch }}
+        echo ${{ github.ref }}
+      shell: bash
+      
     - name: Re-tag docker image
       run: |
         docker tag ${{ inputs.docker_image }} ${{ inputs.sbom_name }}
