@@ -53,5 +53,6 @@ jobs:
         uses: ./.github/actions/docker-scan
         with:
           docker_image: ${{ env.REGISTRY }}/${{ matrix.image }}:latest
+          sbom_name: ${{ matrix.image }}
           token: ${{ secrets.GITHUB_TOKEN }}
           
