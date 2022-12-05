@@ -46,7 +46,7 @@ runs:
       shell: bash
 
     - name: run trivy docker
-      if: upload_sbom
+      if: env.upload_sbom == 'true'
       run: |
         trivy image \
           --format github \
@@ -57,26 +57,26 @@ runs:
       shell: bash
 
     - name: replace apk with alpine
-      if: upload_sbom
+      if: env.upload_sbom == 'true'
       run: |
         sed -i 's/pkg:apk/pkg:alpine/g' dependency-results.sbom.json
       shell: bash
 
     - name: replace correlator
-      if: upload_sbom
+      if: env.upload_sbom == 'true'
       run: |
         cat dependency-results.sbom.json | jq '.job.correlator = "${{ inputs.sbom_name }}"' > sbom.tmp 
         mv sbom.tmp dependency-results.sbom.json
       shell: bash
 
     - name: add mask to token
-      if: upload_sbom
+      if: env.upload_sbom == 'true'
       run: |
         echo "::add-mask::${{ inputs.token }}"
       shell: bash
     
     - name: upload sbom to github
-      if: upload_sbom
+      if: env.upload_sbom == 'true'
       run: |
         curl \
           -H 'Accept: application/vnd.github+json' \
